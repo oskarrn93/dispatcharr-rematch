@@ -25,10 +25,17 @@ type Channel struct {
 }
 
 type Stream struct {
-	ID           int    `json:"id"`
-	Name         string `json:"name"`
-	ChannelGroup *int   `json:"channel_group"`
-	IsStale      bool   `json:"is_stale"`
+	ID           int          `json:"id"`
+	Name         string       `json:"name"`
+	ChannelGroup *int         `json:"channel_group"`
+	IsStale      bool         `json:"is_stale"`
+	StreamStats  *StreamStats `json:"stream_stats"`
+}
+
+// StreamStats is what Dispatcharr records after it has actually played a
+// stream; null until then.
+type StreamStats struct {
+	Resolution string `json:"resolution"` // e.g. "1920x1080"
 }
 
 type M3UAccount struct {

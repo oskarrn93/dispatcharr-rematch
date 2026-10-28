@@ -192,7 +192,7 @@ func Run(ctx context.Context, api API, tel *telemetry.Telemetry, opts Options) (
 			if replacement != nil {
 				tel.Logger.Info("rematch channel", "mode", mode, "channel", ch.Name, "channel_id", ch.ID,
 					"old_stream", oldName, "reason", reason, "new_stream", replacement.Name,
-					"new_stream_id", replacement.ID, "score", round2(score))
+					"new_stream_id", replacement.ID, "quality", StreamQuality(replacement).String(), "score", round2(score))
 				tel.ChannelsRematched.Add(ctx, 1, attrs)
 				res.SlotsRematched++
 				newStreamIDs = append(newStreamIDs, replacement.ID)
@@ -232,13 +232,15 @@ func Run(ctx context.Context, api API, tel *telemetry.Telemetry, opts Options) (
 // stale slot scores the whole healthy pool.
 type candidate struct {
 	*dispatcharr.Stream
-	norm []rune
+	norm    []rune
+	tag     Quality // from the name alone
+	quality Quality // probed resolution when known, else tag
 }
 
 func newCandidates(streams []dispatcharr.Stream) []candidate {
 	out := make([]candidate, len(streams))
 	for i := range streams {
-		out[i] = candidate{&streams[i], normalizedRunes(streams[i].Name)}
+		out[i] = candidate{&streams[i], normalizedRunes(streams[i].Name), nameQuality(streams[i].Name), StreamQuality(&streams[i])}
 	}
 	return out
 }
@@ -247,7 +249,11 @@ func newCandidates(streams []dispatcharr.Stream) []candidate {
 // streams in ch's group when SameGroupOnly is set (falling back to all
 // streams if the group has none), or nil if nothing scores >= threshold.
 // Each candidate is scored against both the channel name and the old
-// stream's name, if any.
+// stream's name, if any. Quality tags are noise to the name match, so
+// "ESPN HD" and "ESPN 4K" tie. Ties go first to a stream carrying the same
+// tag as the channel (or, for an untagged channel, the old stream), so
+// "ESPN FHD" stays FHD rather than drifting to HD or 4K, then to the higher
+// Quality.
 func FindReplacement(
 	ch dispatcharr.Channel,
 	old *dispatcharr.Stream,
@@ -263,24 +269,39 @@ func FindReplacement(
 		slices.ContainsFunc(candidates, func(c candidate) bool { return !used[c.ID] && inGroup(c) })
 
 	names := [][]rune{normalizedRunes(ch.Name)}
+	wantTag := nameQuality(ch.Name)
 	if old != nil {
 		names = append(names, normalizedRunes(old.Name))
+		if wantTag == QualityUnknown {
+			wantTag = nameQuality(old.Name)
+		}
+	}
+	// better orders two candidates with equal name scores.
+	better := func(a, b *candidate) bool {
+		if wantTag != QualityUnknown {
+			if aTag, bTag := a.tag == wantTag, b.tag == wantTag; aTag != bTag {
+				return aTag
+			}
+		}
+		return a.quality > b.quality
 	}
 
-	var best *dispatcharr.Stream
+	var best *candidate
 	bestScore := 0.0
-	for _, c := range candidates {
+	for i, c := range candidates {
 		if used[c.ID] || (scoped && !inGroup(c)) {
 			continue
 		}
+		score := 0.0
 		for _, name := range names {
-			if score := similarity(name, c.norm); score > bestScore {
-				best, bestScore = c.Stream, score
-			}
+			score = max(score, similarity(name, c.norm))
+		}
+		if score > bestScore || (best != nil && score == bestScore && better(&candidates[i], best)) {
+			best, bestScore = &candidates[i], score
 		}
 	}
-	if bestScore >= threshold {
-		return best, bestScore
+	if best != nil && bestScore >= threshold {
+		return best.Stream, bestScore
 	}
 	return nil, bestScore
 }

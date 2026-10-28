@@ -12,6 +12,7 @@ var noiseWords = map[string]bool{
 	"h265": true, "h264": true, "hevc": true, "vip": true, "backup": true,
 	"east": true, "west": true, "feed": true, "raw": true, "multi": true,
 	"sub": true, "dub": true,
+	"2160p": true, "1080p": true, "1080i": true, "720p": true, "576p": true, "480p": true,
 }
 
 func isWordRune(r rune) bool {

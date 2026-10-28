@@ -28,6 +28,9 @@ func TestNormalizeAndSimilarityMatchPython(t *testing.T) {
 		{"Eurosport 1 4K", "EUROSPORT 1 H265", "eurosport 1", "eurosport 1", 1.0},
 		{"C More First", "CMore First HD", "c more first", "cmore first", 0.9565217391304348},
 	}
+	// Not in the Python script: resolution tags are noise too.
+	assert.Equal(t, "espn", Normalize("ESPN 1080p"))
+	assert.Equal(t, "eurosport 1", Normalize("Eurosport 1 2160P"))
 	for _, tc := range cases {
 		t.Run(tc.a+"|"+tc.b, func(t *testing.T) {
 			assert.Equal(t, tc.na, Normalize(tc.a))

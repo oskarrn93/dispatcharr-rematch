@@ -123,6 +123,52 @@ func TestFindReplacementPrefersSameGroupAndSkipsUsed(t *testing.T) {
 	assert.Equal(t, 1, got.ID)
 }
 
+func TestFindReplacementPrefersHigherQualityOnTie(t *testing.T) {
+	ch := dispatcharr.Channel{ID: 1, Name: "Sky Sports Main Event"}
+	candidates := newCandidates([]dispatcharr.Stream{
+		{ID: 1, Name: "UK: Sky Sports Main Event HD"},
+		{ID: 2, Name: "UK: Sky Sports Main Event SD"},
+		{ID: 3, Name: "UK: Sky Sports Main Event UHD 4K"},
+		{ID: 4, Name: "UK: Sky Sports Main Event 1080p"},
+		{ID: 5, Name: "UK: Sky Sports Mix 4K"}, // better quality, worse name
+	})
+
+	got, _ := FindReplacement(ch, nil, candidates, map[int]bool{}, 0.72, false)
+	require.NotNil(t, got)
+	assert.Equal(t, 3, got.ID)
+
+	got, _ = FindReplacement(ch, nil, candidates, map[int]bool{3: true}, 0.72, false)
+	require.NotNil(t, got)
+	assert.Equal(t, 4, got.ID)
+
+	got, _ = FindReplacement(ch, nil, candidates, map[int]bool{3: true, 4: true}, 0.72, false)
+	require.NotNil(t, got)
+	assert.Equal(t, 1, got.ID)
+}
+
+func TestFindReplacementPrefersSameTagAsChannel(t *testing.T) {
+	candidates := newCandidates([]dispatcharr.Stream{
+		{ID: 1, Name: "UK: ITV HD"},
+		{ID: 2, Name: "UK: ITV 4K"},
+		// Probed as 720p, but the name tag is what has to match.
+		{ID: 3, Name: "UK: ITV FHD", StreamStats: &dispatcharr.StreamStats{Resolution: "1280x720"}},
+		{ID: 4, Name: "UK: ITV"},
+	})
+	find := func(chName string, old *dispatcharr.Stream, used map[int]bool) int {
+		t.Helper()
+		got, _ := FindReplacement(dispatcharr.Channel{ID: 1, Name: chName}, old, candidates, used, 0.72, false)
+		require.NotNil(t, got)
+		return got.ID
+	}
+
+	assert.Equal(t, 3, find("UK: ITV FHD", nil, map[int]bool{}))
+	assert.Equal(t, 1, find("UK: ITV HD", nil, map[int]bool{}))
+	assert.Equal(t, 2, find("UK: ITV FHD", nil, map[int]bool{3: true}), "no FHD left: fall back to the best quality")
+	assert.Equal(t, 2, find("UK: ITV", nil, map[int]bool{}), "untagged channel: best quality")
+	assert.Equal(t, 3, find("UK: ITV", &dispatcharr.Stream{ID: 9, Name: "UK: ITV FHD"}, map[int]bool{}),
+		"untagged channel: the old stream's tag decides")
+}
+
 func TestRefreshAndWait(t *testing.T) {
 	quick := RefreshOptions{Timeout: time.Second, PollInterval: time.Millisecond, ErrorGrace: 20 * time.Millisecond}
 
