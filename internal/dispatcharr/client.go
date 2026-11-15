@@ -42,6 +42,7 @@ type M3UAccount struct {
 	ID          int     `json:"id"`
 	Name        string  `json:"name"`
 	IsActive    bool    `json:"is_active"`
+	Locked      bool    `json:"locked"`
 	Status      string  `json:"status"`
 	UpdatedAt   *string `json:"updated_at"`
 	LastMessage *string `json:"last_message"`
@@ -203,5 +204,7 @@ func (c *Client) ListActiveM3UAccounts(ctx context.Context) ([]M3UAccount, error
 		}
 		accounts = p.Results
 	}
-	return slices.DeleteFunc(accounts, func(a M3UAccount) bool { return !a.IsActive }), nil
+	// Dispatcharr's built-in "custom" account is locked and has no URL or
+	// file, so a refresh always leaves it in error.
+	return slices.DeleteFunc(accounts, func(a M3UAccount) bool { return !a.IsActive || a.Locked }), nil
 }

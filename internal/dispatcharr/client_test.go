@@ -49,13 +49,13 @@ func TestClientPaginatesAndReauthenticates(t *testing.T) {
 	assert.Equal(t, 3, streamCalls)
 }
 
-func TestListActiveM3UAccountsFiltersInactive(t *testing.T) {
+func TestListActiveM3UAccountsFiltersInactiveAndLocked(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			_ = json.NewEncoder(w).Encode(map[string]string{"access": "t"})
 			return
 		}
-		_, _ = w.Write([]byte(`[{"id":1,"name":"on","is_active":true,"status":"success"},{"id":2,"name":"off","is_active":false}]`))
+		_, _ = w.Write([]byte(`[{"id":1,"name":"on","is_active":true,"status":"success"},{"id":2,"name":"off","is_active":false},{"id":3,"name":"custom","is_active":true,"locked":true,"status":"error"}]`))
 	}))
 	defer srv.Close()
 
