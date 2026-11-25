@@ -36,10 +36,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/oskarrn93/media-services/dispatcharr-rematch/internal/config"
-	"github.com/oskarrn93/media-services/dispatcharr-rematch/internal/dispatcharr"
-	"github.com/oskarrn93/media-services/dispatcharr-rematch/internal/rematch"
-	"github.com/oskarrn93/media-services/dispatcharr-rematch/internal/telemetry"
+	"github.com/oskarrn93/dispatcharr-rematch/internal/config"
+	"github.com/oskarrn93/dispatcharr-rematch/internal/dispatcharr"
+	"github.com/oskarrn93/dispatcharr-rematch/internal/rematch"
+	"github.com/oskarrn93/dispatcharr-rematch/internal/telemetry"
 )
 
 const (

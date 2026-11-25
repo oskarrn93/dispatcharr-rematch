@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/oskarrn93/media-services/dispatcharr-rematch/internal/dispatcharr"
+	"github.com/oskarrn93/dispatcharr-rematch/internal/dispatcharr"
 )
 
 func TestStreamQuality(t *testing.T) {

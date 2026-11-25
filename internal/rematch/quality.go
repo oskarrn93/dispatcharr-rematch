@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/oskarrn93/media-services/dispatcharr-rematch/internal/dispatcharr"
+	"github.com/oskarrn93/dispatcharr-rematch/internal/dispatcharr"
 )
 
 // Quality ranks a stream's resolution so equally well-named candidates can be

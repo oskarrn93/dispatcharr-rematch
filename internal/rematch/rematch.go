@@ -12,8 +12,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 
-	"github.com/oskarrn93/media-services/dispatcharr-rematch/internal/dispatcharr"
-	"github.com/oskarrn93/media-services/dispatcharr-rematch/internal/telemetry"
+	"github.com/oskarrn93/dispatcharr-rematch/internal/dispatcharr"
+	"github.com/oskarrn93/dispatcharr-rematch/internal/telemetry"
 )
 
 // API is the subset of the Dispatcharr client rematch uses.

@@ -1,4 +1,4 @@
-module github.com/oskarrn93/media-services/dispatcharr-rematch
+module github.com/oskarrn93/dispatcharr-rematch
 
 go 1.27.3
 
